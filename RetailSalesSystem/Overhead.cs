@@ -56,6 +56,9 @@ namespace RetailSalesSystem
             masterBinding.DataMember = "заголовки накладной";
             dataGridView1.DataSource = masterBinding;
 
+            dataGridView1.Columns[5].ReadOnly = true;
+            dataGridView1.Columns[6].ReadOnly = true;
+
             binding.DataSource = masterBinding;
             binding.DataMember = "CustomersOrders";
             dataGridView2.DataSource = binding;
@@ -80,13 +83,38 @@ namespace RetailSalesSystem
 
         private void button1_Click(object sender, EventArgs e)
         {
-            MySqlCommand update = new MySqlCommand();
-            update.Connection = connection;
-            connection.Open();
-            update.CommandText = "update `заголовки накладной`, `sum payment` set `заголовки накладной`.`Сумма оптовая` = `sum payment`.`Сумма оптовая`, `заголовки накладной`.`Сумма розничная` = `sum payment`.`Сумма розничная` where `заголовки накладной`.Номер = `sum payment`.Номер; ";
-            update.ExecuteNonQuery();
-            connection.Close();
-            GetData();
+            for (int i = 0; i < dataGridView1.Rows.Count; i++)
+            {
+                if (dataGridView1.Rows[i].Cells[0].Value == null)
+                {
+                    continue;
+                }
+
+                var nomer = (int)dataGridView1.Rows[i].Cells[0].Value;
+
+                var sumOpt = 0;
+                var sumRozn = 0;
+                for (int j = 0; j < dataGridView2.Rows.Count; j++)
+                {
+                    if (Enumerable.Range(0, dataGridView2.Columns.Count)
+                        .Any(ind => dataGridView2.Rows[j].Cells[ind].Value == null
+                            || dataGridView2.Rows[j].Cells[ind].Value as string == string.Empty))
+                    {
+                        continue;
+                    };
+
+                    if ((int)dataGridView2.Rows[j].Cells[2].Value != nomer)
+                    {
+                        continue;
+                    }
+
+                    sumOpt += (int)dataGridView2.Rows[j].Cells[3].Value * (int)dataGridView2.Rows[j].Cells[4].Value;
+                    sumRozn += (int)dataGridView2.Rows[j].Cells[3].Value * (int)dataGridView2.Rows[j].Cells[5].Value;
+                }
+
+                dataGridView1.Rows[i].Cells[5].Value = sumOpt;
+                dataGridView1.Rows[i].Cells[6].Value = sumRozn;
+            }
         }
 
         private void button2_Click_1(object sender, EventArgs e)
